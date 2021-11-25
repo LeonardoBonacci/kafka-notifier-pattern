@@ -1,31 +1,74 @@
-# Getting started with Apache Kafka and Quarkus
+# Example application of the Kafka notifier-pattern
 
-https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.1/kafka/kafka.html
+This project demonstrates how Apache Kafka can be used in combination with a/any data storage solution in a non-blocking streaming fashion.
+Only requirement is the availability of a reactive driver.
 
-This project demonstrates how to build a Quarkus application using Apache Kafka in less than 10 minutes.
-It uses Reactive Messaging to simplify the interaction with Kafka.
+In a simple, generic and flexible manner, it uses reactive messaging for non-blocking processing, on both the sink and the source.
+Within a demo Kafka topology, this project uses Reactive Quarkus applications as processors that leverage Neo4j for a non-trivial graph-computation.
+
+## Blog post
+
+Further detail and analysis is provided in this-TODO blog post.
+
+## Use-case
+
+- Given a stream/topic of products..
+- ..and a stream/topic of hierarchy nodes
+    - The hierarchy nodes together form an inverted tree (used i.e. for bread crumbs) 
+    - All nodes that form a latest version of a complete hierarchy tree all stream through 'at the same time' i.e. once a day
+- Output is a product with a path of hierarchy nodes until the root
+    - The product with its hierarchy is represented as a nested data structure (product with parent hierarchy node with parent hierarchy node, etc.)
+    - The product only flows out if there exists a path until the root 
+- The height of the tree is unknown
+- A product upsert - with a path to the root - flows out as a product hierarchy entity
+- A hierarchy node upsert flows out product hierarchy entities for all products - with a path to the root - in its subtree 
+
+TODO diagram
 
 ## Start the broker
 
-You would need a Kafka broker.
-Start one using:
+You need a Kafka broker and a Neo4j database.
 
-```shell script
+```
 docker-compose up -d
 ```
 
-**NOTE:** Stop the broker using `docker-compose down; docker-compose rm`
+## Start the applications
 
-## Running the application in dev mode
+To run your applications.
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw quarkus:dev
+```
+mvn quarkus:dev (3 times)
 ```
 
 ## Use the application
 
-```shell script
+Execute the following curl-command to receive the results as server side events.
+
+```
+curl -N localhost:8082/producthierarchies
+
+{
+  "id": "foo",
+  "label": "v1",
+  "parentId": "n1",
+  "parent": {
+    "id": "n1",
+    "label": "v1",
+    "parentId": "root",
+    "parent": {
+      "id": "root",
+      "label": "v1",
+      "parentId": null
+    }
+  }
+}
+
+```
+
+Execute the following curl-commands in any order as input.
+
+```
 curl --header "Content-Type: application/json" \
   --request POST \
   --data '{"id":"root", "label":"v1"}' \
@@ -52,34 +95,10 @@ curl --header "Content-Type: application/json" \
   http://localhost:8081/products
 ```
 
-## Packaging and running the application
-
-The application can be packaged using:
-```shell script
-./mvnw package
 ```
-It produces the `getting-started-kafka-1.0.0-SNAPSHOT-runner.jar` file in the `/target` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/lib` directory.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
+Open http://localhost:7474 and execute 'MATCH (n) RETURN n' to see the data structure.
 ```
 
-The application is now runnable using `java -jar target/getting-started-kafka-1.0.0-SNAPSHOT-runner.jar`.
+## Further reading
 
-## Creating a native executable
-
-You can create a native executable using:
-```shell script
-./mvnw package -Pnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-```shell script
-./mvnw package -Pnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/getting-started-kafka-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.html.
+- https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.1/kafka/kafka.html

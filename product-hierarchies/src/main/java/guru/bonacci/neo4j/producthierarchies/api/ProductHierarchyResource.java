@@ -22,7 +22,7 @@ public class ProductHierarchyResource {
 	@GET
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@RestSseElementType(MediaType.APPLICATION_JSON)
-	public Multi<String> wines() {
+	public Multi<String> resultStream() {
 		return productHierarchies.invoke(ph -> log.info("Gotcha : {}", ph));
 	}
 }
