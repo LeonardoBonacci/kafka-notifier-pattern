@@ -23,7 +23,8 @@ Further detail and analysis is provided in this-TODO blog post.
 - A product upsert - with a path to the root - flows out as a product hierarchy entity
 - A hierarchy node upsert flows out product hierarchy entities for all products - with a path to the root - in its subtree 
 
-TODO diagram
+
+![Flow diagram](pictures/flow-diagram.png)
 
 ## Start the broker
 
